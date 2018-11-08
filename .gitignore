@@ -1,0 +1,6 @@
+.ruby-version
+*.gem
+.bundle
+Gemfile.lock
+pkg/*
+vendor/*
