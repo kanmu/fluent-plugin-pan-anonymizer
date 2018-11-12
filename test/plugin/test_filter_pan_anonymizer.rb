@@ -123,7 +123,7 @@ class PANAnonymizerFilterTest < Test::Unit::TestCase
   test "aaaaaaaa" do
     conf = %[
       <pan>
-        formats %r/4\\d{15}/
+        formats /4\\d{15}/
         checksum_algorithm luhn
         mask xxxx
       </pan>

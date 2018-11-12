@@ -6,7 +6,7 @@ module Fluent::Plugin
     Fluent::Plugin.register_filter("pan_anonymizer", self)
 
     config_section :pan, param_name: :pan_configs, required: true, multi: true do
-      config_param :formats,            :array,  default: []
+      config_param :formats,            :array,  value_type: :regexp, default: []
       config_param :checksum_algorithm, :enum,   list: Fluent::PAN::Masker::CHECKSUM_FUNC.keys, default: :luhn
       config_param :mask,               :string, default: "****"
     end
