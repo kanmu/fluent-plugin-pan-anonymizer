@@ -32,14 +32,12 @@ module Fluent::PAN
 
     def mask_if_found_pan(orgval)
       filtered = orgval.to_s.gsub(@regexp) do |match|
-        digits = match.split("").select do |i|
-          i =~ /\d/
-        end.map do |j|
-          j.to_i
-        end
+        pan = match.split("").select { |i| i =~ /\d/ }.map { |j| j.to_i }
 
-        if valid?(digits)
+        if valid?(pan)
           match = @mask
+        else
+          match
         end
       end
 
@@ -58,8 +56,8 @@ module Fluent::PAN
       retval
     end
 
-    def valid?(digits)
-      @checksum_func.call(digits)
+    def valid?(pan)
+      @checksum_func.call(pan)
     end
 
     def numerals_mask?

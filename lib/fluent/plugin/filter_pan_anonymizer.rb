@@ -9,6 +9,7 @@ module Fluent::Plugin
       config_param :formats,            :array,  value_type: :regexp, default: []
       config_param :checksum_algorithm, :enum,   list: Fluent::PAN::Masker::CHECKSUM_FUNC.keys, default: :luhn
       config_param :mask,               :string, default: "****"
+      config_param :force,              :bool,   default: false
     end
     config_param :ignore_keys,          :array,  default: []
 
@@ -21,14 +22,14 @@ module Fluent::Plugin
 
       @pan_masker = @pan_configs.map do |i|
         i[:formats].map do |format|
-          Fluent::PAN::Masker.new(format, i[:checksum_algorithm], i[:mask])
+          Fluent::PAN::Masker.new(format, i[:checksum_algorithm], i[:mask], i[:force])
         end
       end.flatten
     end
 
     def filter(tag, time, record)
       record.map do |key, value|
-        if @ignore_keys.include? key
+        if @ignore_keys.include? key.to_s
           [key, value]
         else
           _value = value

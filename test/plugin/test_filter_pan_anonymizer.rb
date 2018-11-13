@@ -3,6 +3,8 @@ require 'fluent/test/driver/filter'
 
 require 'fluent/plugin/filter_pan_anonymizer'
 
+# NOTE: The card number in the test doesn't exist in the world!
+
 class PANAnonymizerFilterTest < Test::Unit::TestCase
   def setup
     Fluent::Test::setup
@@ -11,24 +13,24 @@ class PANAnonymizerFilterTest < Test::Unit::TestCase
 
   CONFIG = %[
     <pan>
-      formats /4\d{15}/
+      formats /4\\d{15}/
       checksum_algorithm luhn
-      mask ***
+      mask xxxx
     </pan>
     <pan>
-      formats /4\d{15}/
+      formats /4\\d{15}/
       checksum_algorithm none
-      mask ***
+      mask xxxx
     </pan>
     <pan>
-      formats /4019-\d{4}-\d{4}-\d{4}/
+      formats /4019-\\d{4}-\\d{4}-\\d{4}/
       checksum_algorithm luhn
-      mask ***
+      mask xxxx
     </pan>
     <pan>
-      formats /4019\d{10}/, /4019-\d{4}-\d{4}-\d{4}/
+      formats /4019\\d{10}/, /4019-\\d{4}-\\d{4}-\\d{4}/
       checksum_algorithm luhn
-      mask ***
+      mask xxxx
     </pan>
     ignore_keys ignore1, ignore2
   ]
@@ -120,25 +122,187 @@ class PANAnonymizerFilterTest < Test::Unit::TestCase
 		end
 	end
 
-  test "aaaaaaaa" do
-    conf = %[
-      <pan>
-        formats /4\\d{15}/
-        checksum_algorithm luhn
-        mask xxxx
-      </pan>
-    ]
-    messages = [
-      {
-        "key": "9994019249331712145999"
-      }
-    ]
-    expected = [
-      {
-        "key": "999xxxx999"
-      }
-    ]
-    filtered = filter(conf, messages)
-    assert_equal(expected, filtered)
+  sub_test_case 'normal case' do
+    test "in case of nnnnnnnnnnnnnnnn" do
+      conf = %[
+        <pan>
+          formats /4\\d{15}/
+          checksum_algorithm luhn
+          mask xxxx
+        </pan>
+      ]
+      messages = [
+        {
+          "key": "9994019249331712145999"
+        }
+      ]
+      expected = [
+        {
+          "key": "999xxxx999"
+        }
+      ]
+      filtered = filter(conf, messages)
+      assert_equal(expected, filtered)
+    end
+    test "in case of nnnn-nnnn-nnnn-nnnn" do
+      conf = %[
+        <pan>
+          formats /4\\d{3}-\\d{4}-\\d{4}-\\d{4}/
+          checksum_algorithm luhn
+          mask xxxx
+        </pan>
+      ]
+      messages = [
+        {
+          "key": "9994019-2493-3171-2145999"
+        }
+      ]
+      expected = [
+        {
+          "key": "999xxxx999"
+        }
+      ]
+      filtered = filter(conf, messages)
+      assert_equal(expected, filtered)
+    end
+  end
+
+  sub_test_case 'checksum_algorithm' do
+    test "not be masked if PAN is not satisfied luhn" do
+      conf = %[
+        <pan>
+          formats /4\\d{15}/
+          checksum_algorithm luhn
+          mask xxxx
+        </pan>
+      ]
+      messages = [
+        {
+          "key": "9994019111122223333999"
+        }
+      ]
+      expected = [
+        {
+          "key": "9994019111122223333999"
+        }
+      ]
+      filtered = filter(conf, messages)
+      assert_equal(expected, filtered)
+    end
+    test "be masked if checksum_algorithm is none" do
+      conf = %[
+        <pan>
+          formats /4\\d{15}/
+          checksum_algorithm none
+          mask xxxx
+        </pan>
+      ]
+      messages = [
+        {
+          "key": "9994019111122223333999"
+        }
+      ]
+      expected = [
+        {
+          "key": "999xxxx999"
+        }
+      ]
+      filtered = filter(conf, messages)
+      assert_equal(expected, filtered)
+    end
+  end
+
+  sub_test_case 'integer value' do
+    test "not be masked if mask is string" do
+      conf = %[
+        <pan>
+          formats /4\\d{15}/
+          checksum_algorithm luhn
+          mask xxxx
+        </pan>
+      ]
+      messages = [
+        {
+          "key": 9994019249331712145999
+        }
+      ]
+      expected = [
+        {
+          "key": 9994019249331712145999
+        }
+      ]
+      filtered = filter(conf, messages)
+      assert_equal(expected, filtered)
+    end
+    test "be masked if force flag exists" do
+      conf = %[
+        <pan>
+          formats /4\\d{15}/
+          checksum_algorithm luhn
+          mask xxxx
+          force true
+        </pan>
+      ]
+      messages = [
+        {
+          "key": 9994019249331712145999
+        }
+      ]
+      expected = [
+        {
+          "key": "999xxxx999"
+        }
+      ]
+      filtered = filter(conf, messages)
+      assert_equal(expected, filtered)
+    end
+    test "be masked if mask is integer value" do
+      conf = %[
+        <pan>
+          formats /4\\d{15}/
+          checksum_algorithm luhn
+          mask 1111111111111111
+        </pan>
+      ]
+      messages = [
+        {
+          "key": 9994019249331712145999
+        }
+      ]
+      expected = [
+        {
+          "key": 9991111111111111111999
+        }
+      ]
+      filtered = filter(conf, messages)
+      assert_equal(expected, filtered)
+    end
+  end
+
+  sub_test_case 'ignore keys' do
+    test "not be masked" do
+      conf = %[
+        <pan>
+          formats /4\\d{15}/
+          checksum_algorithm luhn
+          mask 9999999999999999
+        </pan>
+        ignore_keys time
+      ]
+      messages = [
+        {
+          "time": 40192493317121459,
+          "key":  40192493317121459
+        }
+      ]
+      expected = [
+        {
+          "time": 40192493317121459,
+          "key":  99999999999999999
+        }
+      ]
+      filtered = filter(conf, messages)
+      assert_equal(expected, filtered)
+    end
   end
 end
