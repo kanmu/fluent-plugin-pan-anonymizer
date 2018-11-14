@@ -6,8 +6,8 @@ Inspired by [fluent-plugin-anonymizer](https://github.com/y-ken/fluent-plugin-an
 
 # Requirements
 
-- fluentd: v0.14.x
-- Ruby: 2.4
+- fluentd: v0.14.x or later
+- Ruby: 2.4 or later
 
 # Installation
 
