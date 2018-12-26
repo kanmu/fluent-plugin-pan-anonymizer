@@ -20,8 +20,13 @@ module Fluent::Plugin
     def configure(conf)
       super
 
+      formats = conf.each_element.map do |i|
+        next if i["formats"].nil?
+        i["formats"].scan(/\/[^\/]*\//).map do |j| j.delete("/") end.map do |j| Regexp.new(j) end
+      end.flatten
+
       @pan_masker = @pan_configs.map do |i|
-        i[:formats].map do |format|
+        formats.map do |format|
           Fluent::PAN::Masker.new(format, i[:checksum_algorithm], i[:mask], i[:force])
         end
       end.flatten
