@@ -120,6 +120,26 @@ class PANAnonymizerFilterTest < Test::Unit::TestCase
 		    create_driver(conf)
 			end
 		end
+    test 'regexp has ,' do
+      conf = %[
+			  <pan>
+          formats /[0-9]{6}[0-9]{3,9}[0-9]{4}/
+			  </pan>
+      ]
+			assert_nothing_raised(Fluent::ConfigError) do
+		    create_driver(conf)
+			end
+		end
+    test 'regexp has "," and multi formats fields' do
+      conf = %[
+			  <pan>
+          formats /[0-9]{6}[0-9]{3,9}[0-9]{4}/, /[0-9]{15}\d*/
+			  </pan>
+      ]
+			assert_nothing_raised(Fluent::ConfigError) do
+		    create_driver(conf)
+			end
+		end
 	end
 
   sub_test_case 'normal case' do
@@ -160,6 +180,48 @@ class PANAnonymizerFilterTest < Test::Unit::TestCase
       expected = [
         {
           "key": "999xxxx999"
+        }
+      ]
+      filtered = filter(conf, messages)
+      assert_equal(expected, filtered)
+    end
+    test "formats has ','" do
+      conf = %[
+        <pan>
+          formats /([0-9]{6})[0-9]{3,9}([0-9]{4})/
+          checksum_algorithm luhn
+          mask xxxx
+        </pan>
+      ]
+      messages = [
+        {
+          "key": "4019249331712145"
+        }
+      ]
+      expected = [
+        {
+          "key": "xxxx"
+        }
+      ]
+      filtered = filter(conf, messages)
+      assert_equal(expected, filtered)
+    end
+    test "formats has ',' and mult formats fields" do
+      conf = %[
+        <pan>
+          formats /([0-9]{6})[0-9]{3,9}([0-9]{4})/ , /[0-9]{15}/
+          checksum_algorithm luhn
+          mask xxxx
+        </pan>
+      ]
+      messages = [
+        {
+          "key": "4019249331712145"
+        }
+      ]
+      expected = [
+        {
+          "key": "xxxx"
         }
       ]
       filtered = filter(conf, messages)
