@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "fluent-plugin-pan-anonymizer"
-  spec.version       = "0.0.1"
+  spec.version       = "0.0.1.1"
   spec.authors       = ["Hiroaki Sano"]
   spec.email         = ["hiroaki.sano.9stories@gmail.com"]
 
