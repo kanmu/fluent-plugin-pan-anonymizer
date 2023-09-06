@@ -35,7 +35,7 @@ module Fluent::PAN
         pan = match.split("").select { |i| i =~ /\d/ }.map { |j| j.to_i }
 
         if valid?(pan)
-          match = @mask
+           match = match.gsub(@regexp, @mask)
         else
           match
         end
